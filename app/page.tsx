@@ -567,13 +567,15 @@ ${transcript}`
                         <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-2 -mx-2 px-2 hide-scrollbar">
                           {segment.keywords.map((keyword, kidx) => (
                             <div key={kidx} className="relative aspect-video w-[260px] shrink-0 snap-center rounded-xl overflow-hidden bg-[#f5f5f7] group">
-                              <Image
-                                src={`https://loremflickr.com/400/225/${encodeURIComponent(keyword)}?lock=${kidx + 1}`}
+                              <img
+                                src={`https://loremflickr.com/400/225/${encodeURIComponent(keyword.replace(/\s+/g, ','))}?lock=${kidx + 1}`}
                                 alt={keyword}
-                                fill
-                                unoptimized
-                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
                                 referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null; // Prevent infinite loop if fallback also fails
+                                  e.currentTarget.src = `https://picsum.photos/seed/${encodeURIComponent(keyword)}/400/225`;
+                                }}
                               />
                               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2.5">
                                 <p className="text-xs text-white font-normal truncate">{keyword}</p>
