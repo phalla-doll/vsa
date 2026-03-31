@@ -13,6 +13,47 @@ interface Segment {
   keywords: string[];
 }
 
+const ImagePreview = ({ keyword, index }: { keyword: string; index: number }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [imgSrc, setImgSrc] = useState(`https://loremflickr.com/400/225/${encodeURIComponent(keyword.replace(/\s+/g, ','))}?lock=${index + 1}`);
+
+  return (
+    <div className="relative aspect-video w-[260px] shrink-0 snap-center rounded-xl overflow-hidden bg-[#f5f5f7] group">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#e8e8ed] animate-pulse z-10">
+          <ImageIcon className="h-8 w-8 text-[#d2d2d7]" />
+        </div>
+      )}
+      <img
+        src={imgSrc}
+        alt={keyword}
+        className={`object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
+        referrerPolicy="no-referrer"
+        onLoad={() => setIsLoading(false)}
+        onError={(e) => {
+          if (imgSrc.includes('loremflickr')) {
+            setImgSrc(`https://picsum.photos/seed/${encodeURIComponent(keyword)}/400/225`);
+          } else {
+            setIsLoading(false);
+          }
+        }}
+      />
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2.5 z-20">
+        <p className="text-xs text-white font-normal truncate">{keyword}</p>
+      </div>
+      <a 
+        href={`https://www.pexels.com/search/${encodeURIComponent(keyword)}/`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70 z-20"
+        title="Search on Pexels"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+      </a>
+    </div>
+  );
+};
+
 export default function Home() {
   const [transcript, setTranscript] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -566,30 +607,7 @@ ${transcript}`
                         {/* Asset Previews - Scrollable Row */}
                         <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-2 -mx-2 px-2 hide-scrollbar">
                           {segment.keywords.map((keyword, kidx) => (
-                            <div key={kidx} className="relative aspect-video w-[260px] shrink-0 snap-center rounded-xl overflow-hidden bg-[#f5f5f7] group">
-                              <img
-                                src={`https://loremflickr.com/400/225/${encodeURIComponent(keyword.replace(/\s+/g, ','))}?lock=${kidx + 1}`}
-                                alt={keyword}
-                                className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-105"
-                                referrerPolicy="no-referrer"
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null; // Prevent infinite loop if fallback also fails
-                                  e.currentTarget.src = `https://picsum.photos/seed/${encodeURIComponent(keyword)}/400/225`;
-                                }}
-                              />
-                              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-2.5">
-                                <p className="text-xs text-white font-normal truncate">{keyword}</p>
-                              </div>
-                              <a 
-                                href={`https://www.pexels.com/search/${encodeURIComponent(keyword)}/`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-                                title="Search on Pexels"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </a>
-                            </div>
+                            <ImagePreview key={kidx} keyword={keyword} index={kidx} />
                           ))}
                         </div>
                       </div>
