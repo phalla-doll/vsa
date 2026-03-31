@@ -144,7 +144,9 @@ ${transcript}`,
           method: "POST",
           headers: {
             "Authorization": `Bearer ${openRouterKey.trim()}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "HTTP-Referer": typeof window !== 'undefined' ? window.location.origin : "https://aistudio.google.com",
+            "X-Title": "Visual Storytelling Assistant"
           },
           body: JSON.stringify({
             model: modelToUse,
@@ -168,7 +170,23 @@ ${transcript}`
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error?.message || "OpenRouter API error");
+          let errorMessage = errData.error?.message || "OpenRouter API error";
+          
+          // OpenRouter sometimes hides the real error in metadata
+          if (errData.error?.metadata?.raw) {
+            try {
+              const rawError = JSON.parse(errData.error.metadata.raw);
+              if (rawError?.error?.message) {
+                errorMessage += ` - ${rawError.error.message}`;
+              } else {
+                errorMessage += ` - ${errData.error.metadata.raw}`;
+              }
+            } catch (e) {
+              errorMessage += ` - ${errData.error.metadata.raw}`;
+            }
+          }
+          
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
