@@ -9,6 +9,9 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 export const metadata: Metadata = {
   title: 'Visual Storytelling Assistant',
   description: 'Paste a transcript, and instantly get AI-powered visual ideas, keywords, and scene direction for your content.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {
