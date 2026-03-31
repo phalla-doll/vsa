@@ -568,7 +568,7 @@ ${transcript}`
                           {segment.keywords.map((keyword, kidx) => (
                             <div key={kidx} className="relative aspect-video w-[260px] shrink-0 snap-center rounded-xl overflow-hidden bg-[#f5f5f7] group">
                               <Image
-                                src={`https://image.pollinations.ai/prompt/${encodeURIComponent(keyword)}?width=400&height=225&nologo=true`}
+                                src={`https://loremflickr.com/400/225/${encodeURIComponent(keyword)}?lock=${kidx + 1}`}
                                 alt={keyword}
                                 fill
                                 unoptimized
