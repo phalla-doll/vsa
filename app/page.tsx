@@ -563,14 +563,15 @@ ${transcript}`
                           ))}
                         </div>
 
-                        {/* Asset Previews - Clean Grid */}
-                        <div className="grid grid-cols-2 gap-3">
-                          {segment.keywords.slice(0, 2).map((keyword, kidx) => (
-                            <div key={kidx} className="relative aspect-video rounded-xl overflow-hidden bg-[#f5f5f7] group">
+                        {/* Asset Previews - Scrollable Row */}
+                        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-2 -mx-2 px-2 hide-scrollbar">
+                          {segment.keywords.map((keyword, kidx) => (
+                            <div key={kidx} className="relative aspect-video w-[260px] shrink-0 snap-center rounded-xl overflow-hidden bg-[#f5f5f7] group">
                               <Image
-                                src={`https://picsum.photos/seed/${encodeURIComponent(keyword)}/400/225`}
+                                src={`https://image.pollinations.ai/prompt/${encodeURIComponent(keyword)}?width=400&height=225&nologo=true`}
                                 alt={keyword}
                                 fill
+                                unoptimized
                                 className="object-cover transition-transform duration-500 group-hover:scale-105"
                                 referrerPolicy="no-referrer"
                               />
