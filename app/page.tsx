@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
 import { Loader2, Image as ImageIcon, Search, Copy, Check, Sparkles, ExternalLink, Settings, X } from 'lucide-react';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Segment {
   textSegment: string;
@@ -177,97 +178,144 @@ ${transcript}`
     setTimeout(() => setCopiedKeyword(null), 2000);
   };
 
+  // Apple-like spring transition config
+  const springTransition = { type: "spring" as const, bounce: 0.25, duration: 0.5 };
+
   return (
     <main className="min-h-screen bg-[#f5f5f7] font-sans selection:bg-[#0071e3] selection:text-white pb-24 relative">
       {/* Top Bar Settings Button */}
       <div className="absolute top-6 right-6 z-10">
-        <button 
+        <motion.button 
+          whileTap={{ scale: 0.9 }}
           onClick={() => setIsSettingsOpen(true)}
-          className="p-2.5 bg-white rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.06)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] transition-all text-[#1d1d1f]"
+          className="p-2.5 bg-white rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.06)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] transition-shadow text-[#1d1d1f]"
           title="Settings"
         >
           <Settings className="w-5 h-5" />
-        </button>
+        </motion.button>
       </div>
 
       {/* Settings Modal */}
-      {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-[#f5f5f7] flex justify-between items-center">
-              <h2 className="text-lg font-medium text-[#1d1d1f]">Settings</h2>
-              <button onClick={() => setIsSettingsOpen(false)} className="p-1.5 rounded-full hover:bg-[#f5f5f7] transition-colors">
-                <X className="w-5 h-5 text-[#86868b]" />
-              </button>
-            </div>
-            <div className="p-6">
-              {/* Tabs */}
-              <div className="flex p-1 bg-[#f5f5f7] rounded-xl mb-6">
-                <button
-                  onClick={() => setActiveProvider('gemini')}
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeProvider === 'gemini' ? 'bg-white text-[#1d1d1f] shadow-sm' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={springTransition}
+              className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-[#f5f5f7] flex justify-between items-center">
+                <h2 className="text-lg font-medium text-[#1d1d1f]">Settings</h2>
+                <motion.button 
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsSettingsOpen(false)} 
+                  className="p-1.5 rounded-full hover:bg-[#f5f5f7] transition-colors"
                 >
-                  Gemini
-                </button>
-                <button
-                  onClick={() => setActiveProvider('openrouter')}
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeProvider === 'openrouter' ? 'bg-white text-[#1d1d1f] shadow-sm' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
-                >
-                  OpenRouter
-                </button>
+                  <X className="w-5 h-5 text-[#86868b]" />
+                </motion.button>
               </div>
+              <div className="p-6">
+                {/* Tabs (Segmented Control) */}
+                <div className="flex p-1 bg-[#f5f5f7] rounded-xl mb-6 relative">
+                  {['gemini', 'openrouter'].map((provider) => (
+                    <button
+                      key={provider}
+                      onClick={() => setActiveProvider(provider as 'gemini' | 'openrouter')}
+                      className={`relative flex-1 py-2 text-sm font-medium rounded-lg transition-colors z-10 ${
+                        activeProvider === provider ? 'text-[#1d1d1f]' : 'text-[#86868b] hover:text-[#1d1d1f]'
+                      }`}
+                    >
+                      {activeProvider === provider && (
+                        <motion.div
+                          layoutId="activeTabIndicator"
+                          className="absolute inset-0 bg-white rounded-lg shadow-sm -z-10"
+                          transition={springTransition}
+                        />
+                      )}
+                      {provider === 'gemini' ? 'Gemini' : 'OpenRouter'}
+                    </button>
+                  ))}
+                </div>
 
-              {/* Tab Content */}
-              {activeProvider === 'gemini' ? (
-                <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-200">
-                  <div>
-                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">Gemini API Key</label>
-                    <input
-                      type="password"
-                      value={geminiKey}
-                      onChange={(e) => setGeminiKey(e.target.value)}
-                      placeholder="AIzaSy..."
-                      className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
-                    />
-                    <p className="mt-2 text-xs text-[#86868b]">Leave blank to use the default system key.</p>
-                  </div>
+                {/* Tab Content */}
+                <div className="relative overflow-hidden min-h-[160px]">
+                  <AnimatePresence mode="popLayout">
+                    {activeProvider === 'gemini' ? (
+                      <motion.div 
+                        key="gemini"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={springTransition}
+                        className="space-y-4 w-full"
+                      >
+                        <div>
+                          <label className="block text-sm font-medium text-[#1d1d1f] mb-2">Gemini API Key</label>
+                          <input
+                            type="password"
+                            value={geminiKey}
+                            onChange={(e) => setGeminiKey(e.target.value)}
+                            placeholder="AIzaSy..."
+                            className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                          />
+                          <p className="mt-2 text-xs text-[#86868b]">Leave blank to use the default system key.</p>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        key="openrouter"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={springTransition}
+                        className="space-y-4 w-full"
+                      >
+                        <div>
+                          <label className="block text-sm font-medium text-[#1d1d1f] mb-2">OpenRouter API Key</label>
+                          <input
+                            type="password"
+                            value={openRouterKey}
+                            onChange={(e) => setOpenRouterKey(e.target.value)}
+                            placeholder="sk-or-v1-..."
+                            className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-[#1d1d1f] mb-2">Model</label>
+                          <input
+                            type="text"
+                            value={openRouterModel}
+                            onChange={(e) => setOpenRouterModel(e.target.value)}
+                            placeholder="openai/gpt-4o-mini"
+                            className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
-              ) : (
-                <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
-                  <div>
-                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">OpenRouter API Key</label>
-                    <input
-                      type="password"
-                      value={openRouterKey}
-                      onChange={(e) => setOpenRouterKey(e.target.value)}
-                      placeholder="sk-or-v1-..."
-                      className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">Model</label>
-                    <input
-                      type="text"
-                      value={openRouterModel}
-                      onChange={(e) => setOpenRouterModel(e.target.value)}
-                      placeholder="openai/gpt-4o-mini"
-                      className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="px-6 py-4 bg-[#f5f5f7]/50 border-t border-[#f5f5f7] flex justify-end">
-              <button
-                onClick={() => setIsSettingsOpen(false)}
-                className="px-5 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000000] transition-colors"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              </div>
+              <div className="px-6 py-4 bg-[#f5f5f7]/50 border-t border-[#f5f5f7] flex justify-end">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="px-5 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000000] transition-colors"
+                >
+                  Done
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hero Section */}
       <div className="pt-16 pb-10 text-center px-4">
@@ -294,7 +342,8 @@ ${transcript}`
                   onChange={(e) => setTranscript(e.target.value)}
                 />
                 {error && <p className="mt-2 text-sm text-red-500 font-normal px-2">{error}</p>}
-                <button
+                <motion.button
+                  whileTap={!isGenerating && transcript.trim() ? { scale: 0.98 } : {}}
                   onClick={handleGenerate}
                   disabled={isGenerating || !transcript.trim()}
                   className="mt-3 w-full bg-[#1d1d1f] text-white rounded-full py-3 text-[15px] font-normal hover:bg-[#000000] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
@@ -310,7 +359,7 @@ ${transcript}`
                       Generate Visuals
                     </>
                   )}
-                </button>
+                </motion.button>
               </div>
             </div>
           </div>
@@ -334,7 +383,13 @@ ${transcript}`
             ) : segments.length > 0 ? (
               <div className="space-y-5">
                 {segments.map((segment, index) => (
-                  <div key={index} className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)]">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ ...springTransition, delay: index * 0.1 }}
+                    key={index} 
+                    className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-shadow hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)]"
+                  >
                     <div className="flex items-center justify-between mb-5">
                       <span className="text-xs font-medium tracking-widest text-[#86868b] uppercase">Scene {index + 1}</span>
                       <span className="px-2.5 py-0.5 bg-[#f5f5f7] text-[#1d1d1f] rounded-full text-xs font-normal">{segment.mood}</span>
@@ -359,7 +414,8 @@ ${transcript}`
                       </h3>
                       <div className="flex flex-wrap gap-2 mb-5">
                         {segment.keywords.map((kw, kidx) => (
-                          <button 
+                          <motion.button 
+                            whileTap={{ scale: 0.95 }}
                             key={kidx}
                             onClick={() => copyToClipboard(kw)} 
                             className="flex items-center px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#e8e8ed] transition-colors rounded-full text-[14px] font-normal text-[#1d1d1f] group"
@@ -370,7 +426,7 @@ ${transcript}`
                             ) : (
                               <Copy className="ml-1.5 h-3 w-3 text-[#86868b] group-hover:text-[#1d1d1f]" />
                             )}
-                          </button>
+                          </motion.button>
                         ))}
                       </div>
 
@@ -401,7 +457,7 @@ ${transcript}`
                         ))}
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             ) : (
