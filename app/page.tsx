@@ -312,7 +312,7 @@ ${transcript}`
                 </div>
 
                 {/* Tab Content */}
-                <div className="relative overflow-hidden min-h-[160px]">
+                <div className="relative overflow-hidden min-h-[160px] p-1">
                   <AnimatePresence mode="popLayout">
                     {activeProvider === 'gemini' ? (
                       <motion.div 
