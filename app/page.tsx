@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Loader2, Image as ImageIcon, Search, Copy, Check, Sparkles, ExternalLink } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Search, Copy, Check, Sparkles, ExternalLink, Settings, X } from 'lucide-react';
 import Image from 'next/image';
 
 interface Segment {
@@ -19,6 +19,37 @@ export default function Home() {
   const [error, setError] = useState('');
   const [copiedKeyword, setCopiedKeyword] = useState<string | null>(null);
 
+  // Settings State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeProvider, setActiveProvider] = useState<'gemini' | 'openrouter'>('gemini');
+  const [geminiKey, setGeminiKey] = useState('');
+  const [openRouterKey, setOpenRouterKey] = useState('');
+  const [openRouterModel, setOpenRouterModel] = useState('openai/gpt-4o-mini');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const savedProvider = localStorage.getItem('activeProvider') as 'gemini' | 'openrouter';
+    if (savedProvider) setActiveProvider(savedProvider);
+
+    const savedGemini = localStorage.getItem('geminiKey');
+    if (savedGemini) setGeminiKey(savedGemini);
+
+    const savedOpenRouter = localStorage.getItem('openRouterKey');
+    if (savedOpenRouter) setOpenRouterKey(savedOpenRouter);
+
+    const savedModel = localStorage.getItem('openRouterModel');
+    if (savedModel) setOpenRouterModel(savedModel);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    localStorage.setItem('activeProvider', activeProvider);
+    localStorage.setItem('geminiKey', geminiKey);
+    localStorage.setItem('openRouterKey', openRouterKey);
+    localStorage.setItem('openRouterModel', openRouterModel);
+  }, [activeProvider, geminiKey, openRouterKey, openRouterModel, isMounted]);
+
   const handleGenerate = async () => {
     if (!transcript.trim()) {
       setError('Please enter a transcript first.');
@@ -30,10 +61,16 @@ export default function Home() {
     setSegments([]);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Analyze the following transcript and break it down into meaningful segments for a video editor or creator. For each segment, provide:
+      let parsedSegments: Segment[] = [];
+
+      if (activeProvider === 'gemini') {
+        const apiKey = geminiKey.trim() || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        if (!apiKey) throw new Error("Gemini API key is missing. Please configure it in Settings.");
+
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: `Analyze the following transcript and break it down into meaningful segments for a video editor or creator. For each segment, provide:
 1. The original text segment.
 2. The mood or style (e.g., cinematic, energetic, calm).
 3. A specific scene idea (what visuals should appear on screen).
@@ -41,48 +78,94 @@ export default function Home() {
 
 Transcript:
 ${transcript}`,
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                textSegment: {
-                  type: Type.STRING,
-                  description: 'A meaningful chunk of the original transcript.',
-                },
-                mood: {
-                  type: Type.STRING,
-                  description: 'The emotional tone or visual style for this segment.',
-                },
-                sceneIdea: {
-                  type: Type.STRING,
-                  description: 'A clear, actionable description of what should be shown on screen.',
-                },
-                keywords: {
-                  type: Type.ARRAY,
-                  items: {
+          config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  textSegment: {
                     type: Type.STRING,
+                    description: 'A meaningful chunk of the original transcript.',
                   },
-                  description: '3-5 specific keywords for searching stock footage or images.',
+                  mood: {
+                    type: Type.STRING,
+                    description: 'The emotional tone or visual style for this segment.',
+                  },
+                  sceneIdea: {
+                    type: Type.STRING,
+                    description: 'A clear, actionable description of what should be shown on screen.',
+                  },
+                  keywords: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.STRING,
+                    },
+                    description: '3-5 specific keywords for searching stock footage or images.',
+                  },
                 },
+                required: ['textSegment', 'mood', 'sceneIdea', 'keywords'],
               },
-              required: ['textSegment', 'mood', 'sceneIdea', 'keywords'],
             },
           },
-        },
-      });
+        });
 
-      if (response.text) {
-        const parsedSegments = JSON.parse(response.text) as Segment[];
-        setSegments(parsedSegments);
+        if (response.text) {
+          parsedSegments = JSON.parse(response.text) as Segment[];
+        } else {
+          throw new Error('Failed to generate visual ideas. Please try again.');
+        }
       } else {
-        setError('Failed to generate visual ideas. Please try again.');
+        // OpenRouter
+        if (!openRouterKey.trim()) throw new Error("OpenRouter API key is required. Please configure it in Settings.");
+        const modelToUse = openRouterModel.trim() || "openai/gpt-4o-mini";
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${openRouterKey.trim()}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: modelToUse,
+            messages: [
+              {
+                role: "user",
+                content: `Analyze the following transcript and break it down into meaningful segments for a video editor or creator. For each segment, provide:
+1. The original text segment.
+2. The mood or style (e.g., cinematic, energetic, calm).
+3. A specific scene idea (what visuals should appear on screen).
+4. 3-5 highly relevant keywords for searching stock footage or images.
+
+You MUST return ONLY a valid JSON array of objects. Each object must have these exact keys: "textSegment", "mood", "sceneIdea", "keywords" (array of strings). Do not include markdown formatting like \`\`\`json.
+
+Transcript:
+${transcript}`
+              }
+            ]
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || "OpenRouter API error");
+        }
+
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content;
+        if (text) {
+          const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          parsedSegments = JSON.parse(cleanedText) as Segment[];
+        } else {
+          throw new Error("Empty response from OpenRouter.");
+        }
       }
-    } catch (err) {
+
+      setSegments(parsedSegments);
+    } catch (err: any) {
       console.error('Error generating content:', err);
-      setError('An error occurred while analyzing the transcript.');
+      setError(err.message || 'An error occurred while analyzing the transcript.');
     } finally {
       setIsGenerating(false);
     }
@@ -95,7 +178,97 @@ ${transcript}`,
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] font-sans selection:bg-[#0071e3] selection:text-white pb-24">
+    <main className="min-h-screen bg-[#f5f5f7] font-sans selection:bg-[#0071e3] selection:text-white pb-24 relative">
+      {/* Top Bar Settings Button */}
+      <div className="absolute top-6 right-6 z-10">
+        <button 
+          onClick={() => setIsSettingsOpen(true)}
+          className="p-2.5 bg-white rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.06)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] transition-all text-[#1d1d1f]"
+          title="Settings"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Settings Modal */}
+      {isSettingsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-[#f5f5f7] flex justify-between items-center">
+              <h2 className="text-lg font-medium text-[#1d1d1f]">Settings</h2>
+              <button onClick={() => setIsSettingsOpen(false)} className="p-1.5 rounded-full hover:bg-[#f5f5f7] transition-colors">
+                <X className="w-5 h-5 text-[#86868b]" />
+              </button>
+            </div>
+            <div className="p-6">
+              {/* Tabs */}
+              <div className="flex p-1 bg-[#f5f5f7] rounded-xl mb-6">
+                <button
+                  onClick={() => setActiveProvider('gemini')}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeProvider === 'gemini' ? 'bg-white text-[#1d1d1f] shadow-sm' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                >
+                  Gemini
+                </button>
+                <button
+                  onClick={() => setActiveProvider('openrouter')}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeProvider === 'openrouter' ? 'bg-white text-[#1d1d1f] shadow-sm' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                >
+                  OpenRouter
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              {activeProvider === 'gemini' ? (
+                <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-200">
+                  <div>
+                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">Gemini API Key</label>
+                    <input
+                      type="password"
+                      value={geminiKey}
+                      onChange={(e) => setGeminiKey(e.target.value)}
+                      placeholder="AIzaSy..."
+                      className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                    />
+                    <p className="mt-2 text-xs text-[#86868b]">Leave blank to use the default system key.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4 animate-in fade-in slide-in-from-right-2 duration-200">
+                  <div>
+                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">OpenRouter API Key</label>
+                    <input
+                      type="password"
+                      value={openRouterKey}
+                      onChange={(e) => setOpenRouterKey(e.target.value)}
+                      placeholder="sk-or-v1-..."
+                      className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">Model</label>
+                    <input
+                      type="text"
+                      value={openRouterModel}
+                      onChange={(e) => setOpenRouterModel(e.target.value)}
+                      placeholder="openai/gpt-4o-mini"
+                      className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 bg-[#f5f5f7]/50 border-t border-[#f5f5f7] flex justify-end">
+              <button
+                onClick={() => setIsSettingsOpen(false)}
+                className="px-5 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000000] transition-colors"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="pt-16 pb-10 text-center px-4">
         <h1 className="text-4xl md:text-5xl font-normal tracking-tight text-[#1d1d1f] mb-4">
