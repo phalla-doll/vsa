@@ -461,7 +461,7 @@ ${transcript}`
                   transition={springTransition}
                   className="space-y-5 w-full"
                 >
-                  {[1, 2, 3].map((i) => (
+                  {[1, 2].map((i) => (
                     <div key={i} className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-pulse">
                       <div className="h-3 bg-[#f5f5f7] rounded w-20 mb-5"></div>
                       <div className="h-6 bg-[#f5f5f7] rounded w-3/4 mb-6"></div>
