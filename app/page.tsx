@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Loader2, Image as ImageIcon, Search, Copy, Check, Sparkles, ExternalLink, Settings, X } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Search, Copy, Check, Sparkles, ExternalLink, Settings, X, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -27,6 +27,7 @@ export default function Home() {
   const [openRouterKey, setOpenRouterKey] = useState('');
   const [openRouterModel, setOpenRouterModel] = useState('openai/gpt-4o-mini');
   const [isMounted, setIsMounted] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -57,6 +58,23 @@ export default function Home() {
       return;
     }
 
+    const hasGemini = !!(geminiKey.trim() || process.env.NEXT_PUBLIC_GEMINI_API_KEY);
+    const hasOpenRouter = !!openRouterKey.trim();
+
+    if (!hasGemini && !hasOpenRouter) {
+      setIsAlertOpen(true);
+      return;
+    }
+
+    let providerToUse = activeProvider;
+    if (providerToUse === 'gemini' && !hasGemini && hasOpenRouter) {
+      providerToUse = 'openrouter';
+      setActiveProvider('openrouter');
+    } else if (providerToUse === 'openrouter' && !hasOpenRouter && hasGemini) {
+      providerToUse = 'gemini';
+      setActiveProvider('gemini');
+    }
+
     setIsGenerating(true);
     setError('');
     setSegments([]);
@@ -64,9 +82,9 @@ export default function Home() {
     try {
       let parsedSegments: Segment[] = [];
 
-      if (activeProvider === 'gemini') {
+      if (providerToUse === 'gemini') {
         const apiKey = geminiKey.trim() || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-        if (!apiKey) throw new Error("Gemini API key is missing. Please configure it in Settings.");
+        if (!apiKey) throw new Error("Gemini API key is missing.");
 
         const ai = new GoogleGenAI({ apiKey });
         const response = await ai.models.generateContent({
@@ -194,6 +212,54 @@ ${transcript}`
           <Settings className="w-5 h-5" />
         </motion.button>
       </div>
+
+      {/* Alert Modal */}
+      <AnimatePresence>
+        {isAlertOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 backdrop-blur-sm p-4"
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={springTransition}
+              className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden text-center p-6"
+            >
+              <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-medium text-[#1d1d1f] mb-2">API Key Required</h3>
+              <p className="text-[15px] text-[#86868b] mb-6">
+                Please configure either a Gemini or OpenRouter API key in Settings to generate visuals.
+              </p>
+              <div className="flex gap-3">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsAlertOpen(false)}
+                  className="flex-1 py-2.5 bg-[#f5f5f7] text-[#1d1d1f] rounded-full text-[15px] font-medium hover:bg-[#e8e8ed] transition-colors"
+                >
+                  Cancel
+                </motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setIsAlertOpen(false);
+                    setIsSettingsOpen(true);
+                  }}
+                  className="flex-1 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000000] transition-colors"
+                >
+                  Open Settings
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Settings Modal */}
       <AnimatePresence>
