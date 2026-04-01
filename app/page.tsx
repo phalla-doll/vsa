@@ -70,6 +70,12 @@ export default function Home() {
   const [isMounted, setIsMounted] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
+  // Derived metrics
+  const wordCount = transcript.trim() ? transcript.trim().split(/\s+/).length : 0;
+  const charCount = transcript.length;
+  const readingTime = Math.ceil(wordCount / 200);
+  const sizeKb = typeof window !== 'undefined' ? (new Blob([transcript]).size / 1024).toFixed(1) : '0.0';
+
   useEffect(() => {
     setIsMounted(true);
     const savedProvider = localStorage.getItem('activeProvider') as 'gemini' | 'openrouter';
@@ -480,6 +486,18 @@ ${transcript}`
                   value={transcript}
                   onChange={(e) => setTranscript(e.target.value)}
                 />
+                
+                <div className="flex items-center justify-between mt-3 mb-1 px-2 text-xs text-[#86868b] font-medium tracking-wide">
+                  <div className="flex gap-4">
+                    <span>{wordCount} words</span>
+                    <span>{charCount} chars</span>
+                  </div>
+                  <div className="flex gap-4">
+                    <span>~{readingTime} min read</span>
+                    <span>{sizeKb} KB</span>
+                  </div>
+                </div>
+
                 <motion.button
                   layout
                   transition={springTransition}
