@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Loader2, Image as ImageIcon, Search, Copy, Check, Sparkles, ExternalLink, Settings, X, AlertCircle } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Search, Copy, Check, Sparkles, ExternalLink, Settings, X, AlertCircle, Moon, Sun } from 'lucide-react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTheme } from 'next-themes';
 
 interface Segment {
   textSegment: string;
@@ -18,10 +19,10 @@ const ImagePreview = ({ keyword, index }: { keyword: string; index: number }) =>
   const [imgSrc, setImgSrc] = useState(`https://loremflickr.com/400/225/${encodeURIComponent(keyword.replace(/\s+/g, ','))}?lock=${index + 1}`);
 
   return (
-    <div className="relative aspect-video w-[260px] shrink-0 snap-center rounded-xl overflow-hidden bg-[#f5f5f7] group">
+    <div className="relative aspect-video w-[260px] shrink-0 snap-center rounded-xl overflow-hidden bg-[#f5f5f7] dark:bg-zinc-800/50 group">
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#e8e8ed] animate-pulse z-10">
-          <ImageIcon className="h-8 w-8 text-[#d2d2d7]" />
+        <div className="absolute inset-0 flex items-center justify-center bg-[#e8e8ed] dark:bg-zinc-800 animate-pulse z-10">
+          <ImageIcon className="h-8 w-8 text-[#d2d2d7] dark:text-zinc-600" />
         </div>
       )}
       <img
@@ -69,6 +70,7 @@ export default function Home() {
   const [openRouterModel, setOpenRouterModel] = useState('openai/gpt-4o-mini');
   const [isMounted, setIsMounted] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   // Derived metrics
   const wordCount = transcript.trim() ? transcript.trim().split(/\s+/).length : 0;
@@ -265,13 +267,13 @@ ${transcript}`
   const springTransition = { type: "spring" as const, bounce: 0.25, duration: 0.5 };
 
   return (
-    <main className="min-h-screen bg-[#f5f5f7] font-sans selection:bg-[#0071e3] selection:text-white pb-24 relative">
+    <main className="min-h-screen bg-[#f5f5f7] dark:bg-zinc-950 font-sans selection:bg-[#0071e3] dark:selection:bg-blue-500 selection:text-white pb-24 relative transition-colors duration-300">
       {/* Top Bar Settings Button */}
       <div className="absolute top-6 right-6 z-10">
         <motion.button 
           whileTap={{ scale: 0.9 }}
           onClick={() => setIsSettingsOpen(true)}
-          className="p-2.5 bg-white rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.06)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] transition-shadow text-[#1d1d1f]"
+          className="p-2.5 bg-white dark:bg-zinc-900 rounded-full shadow-[0_2px_10px_rgb(0,0,0,0.06)] dark:shadow-[0_2px_10px_rgb(0,0,0,0.3)] hover:shadow-[0_4px_15px_rgb(0,0,0,0.1)] dark:hover:shadow-[0_4px_15px_rgb(0,0,0,0.4)] transition-shadow text-[#1d1d1f] dark:text-zinc-100 border border-transparent dark:border-zinc-800"
           title="Settings"
         >
           <Settings className="w-5 h-5" />
@@ -293,15 +295,15 @@ ${transcript}`
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={springTransition}
-              className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden text-center p-6"
+              className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden text-center p-6 border border-transparent dark:border-zinc-800"
             >
-              <div className="w-12 h-12 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-medium text-[#1d1d1f] mb-2">
+              <h3 className="text-lg font-medium text-[#1d1d1f] dark:text-zinc-100 mb-2">
                 {error ? "Error" : "API Key Required"}
               </h3>
-              <p className="text-[15px] text-[#86868b] mb-6">
+              <p className="text-[15px] text-[#86868b] dark:text-zinc-400 mb-6">
                 {error ? error : "Please configure either a Gemini or OpenRouter API key in Settings to generate visuals."}
               </p>
               <div className="flex gap-3">
@@ -309,7 +311,7 @@ ${transcript}`
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setError('')}
-                    className="flex-1 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000000] transition-colors"
+                    className="flex-1 py-2.5 bg-[#1d1d1f] dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-full text-[15px] font-medium hover:bg-[#000000] dark:hover:bg-white transition-colors"
                   >
                     Dismiss
                   </motion.button>
@@ -318,7 +320,7 @@ ${transcript}`
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setIsAlertOpen(false)}
-                      className="flex-1 py-2.5 bg-[#f5f5f7] text-[#1d1d1f] rounded-full text-[15px] font-medium hover:bg-[#e8e8ed] transition-colors"
+                      className="flex-1 py-2.5 bg-[#f5f5f7] dark:bg-zinc-800 text-[#1d1d1f] dark:text-zinc-100 rounded-full text-[15px] font-medium hover:bg-[#e8e8ed] dark:hover:bg-zinc-700 transition-colors"
                     >
                       Cancel
                     </motion.button>
@@ -328,7 +330,7 @@ ${transcript}`
                         setIsAlertOpen(false);
                         setIsSettingsOpen(true);
                       }}
-                      className="flex-1 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000000] transition-colors"
+                      className="flex-1 py-2.5 bg-[#1d1d1f] dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-full text-[15px] font-medium hover:bg-[#000000] dark:hover:bg-white transition-colors"
                     >
                       Open Settings
                     </motion.button>
@@ -355,33 +357,33 @@ ${transcript}`
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={springTransition}
-              className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden"
+              className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-transparent dark:border-zinc-800"
             >
-              <div className="px-6 py-4 border-b border-[#f5f5f7] flex justify-between items-center">
-                <h2 className="text-lg font-medium text-[#1d1d1f]">Settings</h2>
+              <div className="px-6 py-4 border-b border-[#f5f5f7] dark:border-zinc-800 flex justify-between items-center">
+                <h2 className="text-lg font-medium text-[#1d1d1f] dark:text-zinc-100">Settings</h2>
                 <motion.button 
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsSettingsOpen(false)} 
-                  className="p-1.5 rounded-full hover:bg-[#f5f5f7] transition-colors"
+                  className="p-1.5 rounded-full hover:bg-[#f5f5f7] dark:hover:bg-zinc-800 transition-colors"
                 >
-                  <X className="w-5 h-5 text-[#86868b]" />
+                  <X className="w-5 h-5 text-[#86868b] dark:text-zinc-400" />
                 </motion.button>
               </div>
               <div className="p-6">
                 {/* Tabs (Segmented Control) */}
-                <div className="flex p-1 bg-[#f5f5f7] rounded-xl mb-6 relative">
+                <div className="flex p-1 bg-[#f5f5f7] dark:bg-zinc-800/50 rounded-xl mb-6 relative">
                   {['gemini', 'openrouter'].map((provider) => (
                     <button
                       key={provider}
                       onClick={() => setActiveProvider(provider as 'gemini' | 'openrouter')}
                       className={`relative flex-1 py-2 text-sm font-medium rounded-lg transition-colors z-10 ${
-                        activeProvider === provider ? 'text-[#1d1d1f]' : 'text-[#86868b] hover:text-[#1d1d1f]'
+                        activeProvider === provider ? 'text-[#1d1d1f] dark:text-zinc-100' : 'text-[#86868b] dark:text-zinc-500 hover:text-[#1d1d1f] dark:hover:text-zinc-300'
                       }`}
                     >
                       {activeProvider === provider && (
                         <motion.div
                           layoutId="activeTabIndicator"
-                          className="absolute inset-0 bg-white rounded-lg shadow-sm -z-10"
+                          className="absolute inset-0 bg-white dark:bg-zinc-700 rounded-lg shadow-sm -z-10"
                           transition={springTransition}
                         />
                       )}
@@ -403,15 +405,15 @@ ${transcript}`
                         className="space-y-4 w-full"
                       >
                         <div>
-                          <label className="block text-sm font-medium text-[#1d1d1f] mb-2">Gemini API Key</label>
+                          <label className="block text-sm font-medium text-[#1d1d1f] dark:text-zinc-200 mb-2">Gemini API Key</label>
                           <input
                             type="password"
                             value={geminiKey}
                             onChange={(e) => setGeminiKey(e.target.value)}
                             placeholder="AIzaSy..."
-                            className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                            className="w-full bg-[#f5f5f7] dark:bg-zinc-800/50 rounded-xl p-3 text-[15px] text-[#1d1d1f] dark:text-zinc-100 placeholder:text-[#86868b] dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 dark:focus:ring-blue-500/30 transition-all border border-transparent dark:border-zinc-700/50"
                           />
-                          <p className="mt-2 text-xs text-[#86868b]">Leave blank to use the default system key.</p>
+                          <p className="mt-2 text-xs text-[#86868b] dark:text-zinc-500">Leave blank to use the default system key.</p>
                         </div>
                       </motion.div>
                     ) : (
@@ -424,35 +426,62 @@ ${transcript}`
                         className="space-y-4 w-full"
                       >
                         <div>
-                          <label className="block text-sm font-medium text-[#1d1d1f] mb-2">OpenRouter API Key</label>
+                          <label className="block text-sm font-medium text-[#1d1d1f] dark:text-zinc-200 mb-2">OpenRouter API Key</label>
                           <input
                             type="password"
                             value={openRouterKey}
                             onChange={(e) => setOpenRouterKey(e.target.value)}
                             placeholder="sk-or-v1-..."
-                            className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                            className="w-full bg-[#f5f5f7] dark:bg-zinc-800/50 rounded-xl p-3 text-[15px] text-[#1d1d1f] dark:text-zinc-100 placeholder:text-[#86868b] dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 dark:focus:ring-blue-500/30 transition-all border border-transparent dark:border-zinc-700/50"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-[#1d1d1f] mb-2">Model</label>
+                          <label className="block text-sm font-medium text-[#1d1d1f] dark:text-zinc-200 mb-2">Model</label>
                           <input
                             type="text"
                             value={openRouterModel}
                             onChange={(e) => setOpenRouterModel(e.target.value)}
                             placeholder="openai/gpt-4o-mini"
-                            className="w-full bg-[#f5f5f7] rounded-xl p-3 text-[15px] text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 transition-all"
+                            className="w-full bg-[#f5f5f7] dark:bg-zinc-800/50 rounded-xl p-3 text-[15px] text-[#1d1d1f] dark:text-zinc-100 placeholder:text-[#86868b] dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 dark:focus:ring-blue-500/30 transition-all border border-transparent dark:border-zinc-700/50"
                           />
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
+
+                {/* Theme Toggle */}
+                <div className="mt-6 pt-6 border-t border-[#f5f5f7] dark:border-zinc-800 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#f5f5f7] dark:bg-zinc-800 rounded-lg">
+                      {theme === 'dark' ? <Moon className="w-4 h-4 text-zinc-100" /> : <Sun className="w-4 h-4 text-[#1d1d1f]" />}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-[#1d1d1f] dark:text-zinc-100">Appearance</h3>
+                      <p className="text-xs text-[#86868b] dark:text-zinc-500">Toggle dark mode</p>
+                    </div>
+                  </div>
+                  <div className="flex bg-[#f5f5f7] dark:bg-zinc-800/50 p-1 rounded-lg">
+                    <button
+                      onClick={() => setTheme('light')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${theme === 'light' ? 'bg-white text-[#1d1d1f] shadow-sm' : 'text-[#86868b] hover:text-[#1d1d1f]'}`}
+                    >
+                      Light
+                    </button>
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${theme === 'dark' ? 'bg-zinc-700 text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      Dark
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="px-6 py-4 bg-[#f5f5f7]/50 border-t border-[#f5f5f7] flex justify-end">
+              <div className="px-6 py-4 bg-[#f5f5f7]/50 dark:bg-zinc-900/50 border-t border-[#f5f5f7] dark:border-zinc-800 flex justify-end">
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsSettingsOpen(false)}
-                  className="px-5 py-2.5 bg-[#1d1d1f] text-white rounded-full text-[15px] font-medium hover:bg-[#000000] transition-colors"
+                  className="px-5 py-2.5 bg-[#1d1d1f] dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-full text-[15px] font-medium hover:bg-[#000000] dark:hover:bg-white transition-colors"
                 >
                   Done
                 </motion.button>
@@ -464,11 +493,11 @@ ${transcript}`
 
       {/* Hero Section */}
       <div className="pt-16 pb-10 text-center px-4">
-        <h1 className="text-4xl md:text-5xl font-normal tracking-tight text-[#1d1d1f] mb-4">
+        <h1 className="text-4xl md:text-5xl font-normal tracking-tight text-[#1d1d1f] dark:text-zinc-100 mb-4">
           Visual Storytelling. <br className="hidden md:block" />
-          <span className="text-[#86868b]">Reimagined.</span>
+          <span className="text-[#86868b] dark:text-zinc-500">Reimagined.</span>
         </h1>
-        <p className="text-lg text-[#86868b] font-normal max-w-2xl mx-auto tracking-tight">
+        <p className="text-lg text-[#86868b] dark:text-zinc-400 font-normal max-w-2xl mx-auto tracking-tight">
           Paste your transcript and let AI craft the perfect visual direction, scene by scene.
         </p>
       </div>
@@ -478,16 +507,16 @@ ${transcript}`
           {/* Left Col: Input */}
           <div className="lg:col-span-5 relative">
             <div className="sticky top-8 space-y-6">
-              <div className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                <h2 className="text-xl font-medium tracking-tight mb-3 text-[#1d1d1f]">Transcript</h2>
+              <div className="bg-white dark:bg-zinc-900 rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-transparent dark:border-zinc-800">
+                <h2 className="text-xl font-medium tracking-tight mb-3 text-[#1d1d1f] dark:text-zinc-100">Transcript</h2>
                 <textarea
-                  className="w-full h-[300px] bg-[#f5f5f7] rounded-2xl p-4 text-[15px] leading-relaxed text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 resize-none transition-all"
+                  className="w-full h-[300px] bg-[#f5f5f7] dark:bg-zinc-800/50 rounded-2xl p-4 text-[15px] leading-relaxed text-[#1d1d1f] dark:text-zinc-100 placeholder:text-[#86868b] dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-[#0071e3]/30 dark:focus:ring-blue-500/30 resize-none transition-all border border-transparent dark:border-zinc-700/50"
                   placeholder="Paste your script, narration, or spoken content here..."
                   value={transcript}
                   onChange={(e) => setTranscript(e.target.value)}
                 />
                 
-                <div className="flex items-center justify-between mt-3 mb-1 px-2 text-xs text-[#86868b] font-medium tracking-wide">
+                <div className="flex items-center justify-between mt-3 mb-1 px-2 text-xs text-[#86868b] dark:text-zinc-500 font-medium tracking-wide">
                   <div className="flex gap-4">
                     <span>{wordCount} words</span>
                     <span>{charCount} chars</span>
@@ -504,7 +533,7 @@ ${transcript}`
                   whileTap={!isGenerating && transcript.trim() ? { scale: 0.95 } : {}}
                   onClick={handleGenerate}
                   disabled={isGenerating || !transcript.trim()}
-                  className="mt-3 w-full h-[48px] bg-[#1d1d1f] text-white rounded-full text-[15px] font-normal hover:bg-[#000000] transition-colors disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden relative flex items-center justify-center"
+                  className="mt-3 w-full h-[48px] bg-[#1d1d1f] dark:bg-zinc-100 text-white dark:text-zinc-900 rounded-full text-[15px] font-medium hover:bg-[#000000] dark:hover:bg-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden relative flex items-center justify-center"
                 >
                   <AnimatePresence mode="popLayout" initial={false}>
                     {isGenerating ? (
@@ -552,13 +581,13 @@ ${transcript}`
                   className="space-y-5 w-full"
                 >
                   {[1, 2].map((i) => (
-                    <div key={i} className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] animate-pulse">
-                      <div className="h-3 bg-[#f5f5f7] rounded w-20 mb-5"></div>
-                      <div className="h-6 bg-[#f5f5f7] rounded w-3/4 mb-6"></div>
-                      <div className="h-20 bg-[#f5f5f7] rounded-xl w-full mb-5"></div>
+                    <div key={i} className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-transparent dark:border-zinc-800 animate-pulse">
+                      <div className="h-3 bg-[#f5f5f7] dark:bg-zinc-800 rounded w-20 mb-5"></div>
+                      <div className="h-6 bg-[#f5f5f7] dark:bg-zinc-800 rounded w-3/4 mb-6"></div>
+                      <div className="h-20 bg-[#f5f5f7] dark:bg-zinc-800 rounded-xl w-full mb-5"></div>
                       <div className="flex gap-2">
-                        <div className="h-7 bg-[#f5f5f7] rounded-full w-16"></div>
-                        <div className="h-7 bg-[#f5f5f7] rounded-full w-20"></div>
+                        <div className="h-7 bg-[#f5f5f7] dark:bg-zinc-800 rounded-full w-16"></div>
+                        <div className="h-7 bg-[#f5f5f7] dark:bg-zinc-800 rounded-full w-20"></div>
                       </div>
                     </div>
                   ))}
@@ -580,28 +609,28 @@ ${transcript}`
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       transition={{ ...springTransition, delay: index * 0.05 }}
                       key={index} 
-                      className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-shadow hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)]"
+                      className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-transparent dark:border-zinc-800 transition-shadow hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] dark:hover:shadow-[0_8px_40px_rgb(0,0,0,0.3)]"
                     >
                       <div className="flex items-center justify-between mb-5">
-                        <span className="text-xs font-medium tracking-widest text-[#86868b] uppercase">Scene {index + 1}</span>
-                        <span className="px-2.5 py-0.5 bg-[#f5f5f7] text-[#1d1d1f] rounded-full text-xs font-normal">{segment.mood}</span>
+                        <span className="text-xs font-medium tracking-widest text-[#86868b] dark:text-zinc-500 uppercase">Scene {index + 1}</span>
+                        <span className="px-2.5 py-0.5 bg-[#f5f5f7] dark:bg-zinc-800 text-[#1d1d1f] dark:text-zinc-300 rounded-full text-xs font-medium">{segment.mood}</span>
                       </div>
                       
-                      <p className="text-lg font-normal leading-snug tracking-tight mb-6 text-[#1d1d1f]">
+                      <p className="text-lg font-normal leading-snug tracking-tight mb-6 text-[#1d1d1f] dark:text-zinc-100">
                         &quot;{segment.textSegment}&quot;
                       </p>
 
                       <div className="mb-6">
-                        <h3 className="text-xs font-medium tracking-widest text-[#86868b] uppercase mb-2 flex items-center gap-1.5">
+                        <h3 className="text-xs font-medium tracking-widest text-[#86868b] dark:text-zinc-500 uppercase mb-2 flex items-center gap-1.5">
                           <ImageIcon className="h-3.5 w-3.5" /> Visual Direction
                         </h3>
-                        <p className="text-[15px] leading-relaxed text-[#1d1d1f] bg-[#f5f5f7] p-4 rounded-xl">
+                        <p className="text-[15px] leading-relaxed text-[#1d1d1f] dark:text-zinc-300 bg-[#f5f5f7] dark:bg-zinc-800/50 p-4 rounded-xl border border-transparent dark:border-zinc-700/50">
                           {segment.sceneIdea}
                         </p>
                       </div>
 
                       <div>
-                        <h3 className="text-xs font-medium tracking-widest text-[#86868b] uppercase mb-2 flex items-center gap-1.5">
+                        <h3 className="text-xs font-medium tracking-widest text-[#86868b] dark:text-zinc-500 uppercase mb-2 flex items-center gap-1.5">
                           <Search className="h-3.5 w-3.5" /> Keywords & Assets
                         </h3>
                         <div className="flex flex-wrap gap-2 mb-5">
@@ -610,13 +639,13 @@ ${transcript}`
                               whileTap={{ scale: 0.95 }}
                               key={kidx}
                               onClick={() => copyToClipboard(kw)} 
-                              className="flex items-center px-3 py-1.5 bg-[#f5f5f7] hover:bg-[#e8e8ed] transition-colors rounded-full text-[14px] font-normal text-[#1d1d1f] group"
+                              className="flex items-center px-3 py-1.5 bg-[#f5f5f7] dark:bg-zinc-800 hover:bg-[#e8e8ed] dark:hover:bg-zinc-700 transition-colors rounded-full text-[14px] font-medium text-[#1d1d1f] dark:text-zinc-200 group border border-transparent dark:border-zinc-700/50"
                             >
                               {kw}
                               {copiedKeyword === kw ? (
-                                <Check className="ml-1.5 h-3 w-3 text-green-600" />
+                                <Check className="ml-1.5 h-3 w-3 text-green-600 dark:text-green-400" />
                               ) : (
-                                <Copy className="ml-1.5 h-3 w-3 text-[#86868b] group-hover:text-[#1d1d1f]" />
+                                <Copy className="ml-1.5 h-3 w-3 text-[#86868b] dark:text-zinc-500 group-hover:text-[#1d1d1f] dark:group-hover:text-zinc-300" />
                               )}
                             </motion.button>
                           ))}
